@@ -1,10 +1,11 @@
+/*
 package com.reyaz.swipeassignment.ui.product
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.reyaz.swipeassignment.data.remote.api.RetrofitClient
+import com.reyaz.swipeassignment.data.api.RetrofitClient
 import com.reyaz.swipeassignment.domain.model.Product
 import kotlinx.coroutines.launch
 import okhttp3.MultipartBody
@@ -66,4 +67,4 @@ class ProductViewModel : ViewModel() {
             }
         }
     }
-}
+}*/

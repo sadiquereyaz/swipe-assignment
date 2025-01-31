@@ -1,4 +1,5 @@
-package com.reyaz.swipeassignment.data.remote.api
+/*
+package com.reyaz.swipeassignment.data.api
 
 import com.reyaz.swipeassignment.domain.model.AddProductResponse
 import com.reyaz.swipeassignment.domain.model.Product
@@ -36,4 +37,4 @@ object RetrofitClient {
             .build()
             .create(ProductApiService::class.java)
     }
-}
+}*/

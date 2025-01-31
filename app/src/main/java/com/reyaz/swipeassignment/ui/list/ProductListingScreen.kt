@@ -1,3 +1,4 @@
+/*
 package com.reyaz.swipeassignment.ui.list
 
 import androidx.compose.foundation.layout.Column
@@ -68,4 +69,4 @@ fun ProductItem(product: Product) {
             Text(text = "Tax: ${product.tax}%", style = MaterialTheme.typography.bodyMedium)
         }
     }
-}
+}*/

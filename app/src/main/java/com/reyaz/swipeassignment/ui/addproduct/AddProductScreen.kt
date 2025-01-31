@@ -1,3 +1,4 @@
+/*
 package com.reyaz.swipeassignment.ui.addproduct
 
 import android.net.Uri
@@ -86,4 +87,4 @@ fun AddProductScreen(viewModel: ProductViewModel, onClose: () -> Unit) {
             }
         }
     }
-}
+}*/
