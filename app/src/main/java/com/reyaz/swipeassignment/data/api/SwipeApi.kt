@@ -5,6 +5,7 @@ import com.reyaz.swipeassignment.domain.model.Product
 import com.reyaz.swipeassignment.domain.model.ProductResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -12,7 +13,7 @@ import retrofit2.http.Part
 
 interface SwipeApi {
     @GET("get")
-    suspend fun getProducts(): Resource<List<Product>>
+    suspend fun getProducts(): Response<List<Product>>
 
     @Multipart
     @POST("add")

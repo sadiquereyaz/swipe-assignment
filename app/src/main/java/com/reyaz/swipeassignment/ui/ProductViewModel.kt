@@ -1,6 +1,7 @@
 package com.reyaz.swipeassignment.ui
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
@@ -22,25 +23,30 @@ class ProductViewModel(
 
     // Fetch all products on initialization
     init {
+        Log.d("VIEWMODEL", "init")
         loadProducts()
     }
 
     // Function to load products
-    private fun loadProducts() {
+    fun loadProducts() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) } // Show loading
             repository.getAllProducts().collect { result ->
+                val products = result.data ?: emptyList()
                 _uiState.update { state ->
                     when (result) {
                         is Resource.Success -> state.copy(
-                            products = result.data ?: emptyList(),
+                            products = products,
+                            searchList = filterProducts(products, state.searchQuery),
                             isLoading = false,
                             error = null
                         )
+
                         is Resource.Error -> state.copy(
                             isLoading = false,
                             error = result.message
                         )
+
                         is Resource.Loading -> state.copy(
                             isLoading = true,
                             error = null
@@ -51,10 +57,29 @@ class ProductViewModel(
         }
     }
 
-    // Function to update the search query
+    // Function to update the search query and filter products
     fun updateSearchQuery(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
+        _uiState.update { currentState ->
+            currentState.copy(
+                searchQuery = query,
+                searchList = filterProducts(currentState.products, query)
+            )
+        }
     }
+
+    // Helper function to filter products based on search query
+    private fun filterProducts(products: List<ProductEntity>, query: String): List<ProductEntity> {
+        return if (query.isBlank()) {
+            products
+        } else {
+            products.filter { product ->
+                product.productName.contains(query, ignoreCase = true) ||
+                        product.productType.contains(query, ignoreCase = true) ||
+                        product.price.toString().contains(query, ignoreCase = true)
+            }
+        }
+    }
+
 
     // Function to add a new product
     fun addProduct(
@@ -78,9 +103,11 @@ class ProductViewModel(
                     // Reload products after adding a new one
                     loadProducts()
                 }
+
                 is Resource.Error -> {
                     _uiState.update { it.copy(isLoading = false, error = result.message) }
                 }
+
                 is Resource.Loading -> {
                     // Handle loading state if needed
                 }
@@ -90,10 +117,3 @@ class ProductViewModel(
 
 
 }
-// State class
-data class ProductUiState(
-    val products: List<ProductEntity> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val searchQuery: String = ""
-)

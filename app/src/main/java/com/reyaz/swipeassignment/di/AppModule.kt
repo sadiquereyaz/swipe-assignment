@@ -3,6 +3,7 @@
 
 package com.reyaz.swipeassignment.di
 
+import androidx.compose.ui.input.key.Key.Companion.D
 import androidx.room.Room
 import com.reyaz.swipeassignment.data.api.SwipeApi
 import com.reyaz.swipeassignment.data.db.AppDatabase
@@ -23,7 +24,9 @@ val appModule = module {
             get(),
             AppDatabase::class.java,
             "swipe-db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
     single { get<AppDatabase>().productDao() }
 

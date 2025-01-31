@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit
 fun createRetrofitInstance(): Retrofit {
     val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.HEADERS
     }
 
     val client = OkHttpClient.Builder()
