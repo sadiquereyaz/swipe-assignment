@@ -4,7 +4,9 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -44,6 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,8 +55,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -83,15 +89,15 @@ fun AddProductBottomSheet(
         }
     }
 
-    var productName by remember { mutableStateOf("") }
-    var productType by remember { mutableStateOf("") }
+    var productName by remember { mutableStateOf("Pr Name") }
+    var productType by remember { mutableStateOf("Pr Type") }
     var isProductTypeDropdownExpanded by remember { mutableStateOf(false) }
-    var price by remember { mutableStateOf("") }
-    var tax by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("12") }
+    var tax by remember { mutableStateOf("1.1") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var currentStep by remember { mutableStateOf(0) }
+    var currentStep by remember { mutableIntStateOf(3) }
 
     // Animated progress
     val animatedProgress by animateFloatAsState(
@@ -172,19 +178,6 @@ fun AddProductBottomSheet(
         ) {
             // Step 1: Product Details
             if (currentStep == 0) {
-                /*OutlinedTextField(
-                    value = productName,
-                    onValueChange = {
-                        productName = it
-                        errorMessage = null
-                    },
-                    label = { Text("Product Name") },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )*/
                 OutlinedTextField(
                     value = productName,
                     onValueChange = {
@@ -333,209 +326,215 @@ fun AddProductBottomSheet(
 
             // Step 3: Image Selection
             if (currentStep == 2) {
-                Button(
-                    onClick = { launcher.launch("image/*") },
-                    modifier = Modifier.fillMaxWidth()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Text("Select Image")
-                }
-
-                // Display Selected Image
-                if (imageUri != null) {
-                    AsyncImage(
-                        model = imageUri,
-                        contentDescription = null,
+                    Column(
                         modifier = Modifier
-                            .size(200.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .align(Alignment.CenterHorizontally)
-                    )
-                }
-            }
+                            .clickable { launcher.launch("image/*") }
+                            .size(250.dp)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.onBackground,
+                                RoundedCornerShape(16.dp)
+                            ),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
 
-            // Step 4: Confirmation
-            if (currentStep == 3) {
-                Card(
-                    modifier = Modifier,
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Box {
-                        Column(
-                            modifier = Modifier
-                        ) {
+                    ) {
+                        if (imageUri != null) {
                             AsyncImage(
                                 model = imageUri,
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp)
-                                    .size(200.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                                placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                                onLoading = {},
-                                contentScale = ContentScale.Crop
+                                    .fillMaxSize(0.8f)
+//                                    .size(200.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .align(Alignment.CenterHorizontally)
                             )
-
-
-                            Column(modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 8.dp)) {
-                                Text(
-                                    text = productName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Price: ₹${price}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    text = "Tax: ${tax}%",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
+                        } else {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.image_plus),
+                                contentDescription = "upload image",
+                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                modifier = Modifier
+                                    .fillMaxSize(0.8f)
+                            )
+                            Text("Upload Image")
                         }
-                        Text(
-                            text = productType,
-                            maxLines = 1,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier
-                                .background(Color(0xFFCE7A00).copy(alpha = 0.9f))
-                                .padding(end = 10.dp, start = 8.dp)
-                                .align(alignment = Alignment.BottomEnd)
-                        )
                     }
                 }
-                /*Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("Product Summary", style = MaterialTheme.typography.titleLarge)
-                    Text("Name: $productName")
-                    Text("Type: $productType")
-                    Text("Price: $price")
-                    Text("Tax Rate: $tax")
-                    if (imageUri != null) {
+            }
+        }
+
+
+        // Step 4: Confirmation
+        if (currentStep == 3) {
+            Card(
+                modifier = Modifier,
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Box {
+                    Column(
+                        modifier = Modifier
+                    ) {
                         AsyncImage(
                             model = imageUri,
-                            contentDescription = "Selected Product Image",
+                            contentDescription = null,
                             modifier = Modifier
-                                .size(150.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .size(200.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                            onLoading = {},
+                            contentScale = ContentScale.Crop
                         )
-                    }
-                }*/
-            }
 
-            // Error Message
-            if (errorMessage != null) {
-                Text(
-                    text = errorMessage!!,
-                    color = Color.Red,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // Navigation Buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Back Button (except for first step)
-                if (currentStep > 0) {
-                    Button(
-                        onClick = {
-                            if (currentStep > 0) currentStep--
-                            errorMessage = null
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Back")
+                        Column(modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 8.dp)) {
+                            Text(
+                                text = productName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Price: ₹${price}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "Tax: ${tax}%",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
+                    Text(
+                        text = productType,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .background(Color(0xFFCE7A00).copy(alpha = 0.9f))
+                            .padding(end = 10.dp, start = 8.dp)
+                            .align(alignment = Alignment.BottomEnd)
+                    )
                 }
+            }
+        }
 
-                // Next/Add Button
+        // Error Message
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage!!,
+                color = Color.Red,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Navigation Buttons
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Back Button (except for first step)
+            if (currentStep > 0) {
                 Button(
                     onClick = {
-                        when (currentStep) {
-                            0 -> {
-                                // Validate Product Details
-                                if (productName.isBlank()) {
-                                    errorMessage = "Product Name is required"
-                                    return@Button
-                                }
-                                if (productType.isBlank()) {
-                                    errorMessage = "Product Type is required"
-                                    return@Button
-                                }
-                                currentStep++
-                            }
-
-                            1 -> {
-                                // Validate Pricing
-                                if (price.isBlank()) {
-                                    errorMessage = "Price is required"
-                                    return@Button
-                                }
-                                if (tax.isBlank()) {
-                                    errorMessage = "Tax Rate is required"
-                                    return@Button
-                                }
-                                currentStep++
-                            }
-
-                            2 -> {
-                                // Validate Image
-                                if (imageUri == null) {
-                                    errorMessage = "Please select an image"
-                                    return@Button
-                                }
-                                currentStep++
-                            }
-
-                            3 -> {
-                                // Final Submit
-                                isUploading = true
-                                try {
-                                    viewModel.addProduct(
-                                        productName,
-                                        productType,
-                                        price.toDoubleOrNull()
-                                            ?: throw NumberFormatException("Invalid Price"),
-                                        tax.toDoubleOrNull()
-                                            ?: throw NumberFormatException("Invalid Tax Rate"),
-                                        imageUri
-                                    )
-                                    onDismiss()
-                                } catch (e: Exception) {
-                                    errorMessage = "Failed to add product: ${e.localizedMessage}"
-                                    isUploading = false
-                                    currentStep = 2
-                                }
-                            }
-                        }
+                        if (currentStep > 0) currentStep--
+                        errorMessage = null
                     },
-                    enabled = !isUploading,
                     modifier = Modifier.weight(1f)
                 ) {
-                    if (isUploading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Text(
-                            text = when (currentStep) {
-                                3 -> "Add Product"
-                                else -> "Next"
+                    Text("Back")
+                }
+            }
+
+            // Next/Add Button
+            Button(
+                onClick = {
+                    when (currentStep) {
+                        0 -> {
+                            // Validate Product Details
+                            if (productName.isBlank()) {
+                                errorMessage = "Product Name is required"
+                                return@Button
                             }
-                        )
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Next"
-                        )
+                            if (productType.isBlank()) {
+                                errorMessage = "Product Type is required"
+                                return@Button
+                            }
+                            currentStep++
+                        }
+
+                        1 -> {
+                            // Validate Pricing
+                            if (price.isBlank()) {
+                                errorMessage = "Price is required"
+                                return@Button
+                            }
+                            if (tax.isBlank()) {
+                                errorMessage = "Tax Rate is required"
+                                return@Button
+                            }
+                            currentStep++
+                        }
+
+                        2 -> {
+                            // Validate Image
+                            if (imageUri == null) {
+                                errorMessage = "Please select an image"
+                                return@Button
+                            }
+                            currentStep++
+                        }
+
+                        3 -> {
+                            // Final Submit
+                            isUploading = true
+                            try {
+                                viewModel.addProduct(
+                                    productName,
+                                    productType,
+                                    price.toDoubleOrNull()
+                                        ?: throw NumberFormatException("Invalid Price"),
+                                    tax.toDoubleOrNull()
+                                        ?: throw NumberFormatException("Invalid Tax Rate"),
+                                    imageUri
+                                )
+                                onDismiss()
+                            } catch (e: Exception) {
+                                errorMessage = "Failed to add product: ${e.localizedMessage}"
+                                isUploading = false
+                                currentStep = 2
+                            }
+                        }
                     }
+                },
+                enabled = !isUploading,
+                modifier = Modifier.weight(1f)
+            ) {
+                if (isUploading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text(
+                        text = when (currentStep) {
+//                            2 -> if(imageUri == null) "Skip" else "Next"
+                            2 -> imageUri?.let {  "Skip" } ?: "Next"
+                            3 -> "Add Product"
+                            else -> "Next"
+                        }
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Next"
+                    )
                 }
             }
         }

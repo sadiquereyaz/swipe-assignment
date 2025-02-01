@@ -1,9 +1,5 @@
-
-
-
 package com.reyaz.swipeassignment.di
 
-import androidx.compose.ui.input.key.Key.Companion.D
 import androidx.room.Room
 import com.reyaz.swipeassignment.data.api.SwipeApi
 import com.reyaz.swipeassignment.data.db.AppDatabase
@@ -29,9 +25,10 @@ val appModule = module {
             .build()
     }
     single { get<AppDatabase>().productDao() }
+    single { get<AppDatabase>().pendingUploadDao() }
 
     // Repository
-    single { ProductRepository(get(), get()) }
+    single { ProductRepository(get(), get(),get(), get()) }
 
     // ViewModels
     viewModel { ProductViewModel(get()) }

@@ -8,5 +8,7 @@ data class ProductUiState(
     val searchList: List<ProductEntity> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    var productAdditionError: String? = null
+
 )

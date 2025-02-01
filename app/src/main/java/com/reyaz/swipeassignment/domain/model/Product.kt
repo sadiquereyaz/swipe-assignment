@@ -3,7 +3,7 @@ package com.reyaz.swipeassignment.domain.model
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
 
 data class Product(
-    val image: String?,
+    val image: String? = null,
     val price: Double,
     val product_name: String,
     val product_type: String,
