@@ -1,4 +1,4 @@
-package com.reyaz.swipeassignment.ui
+package com.reyaz.swipeassignment.presentation.product
 
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
 

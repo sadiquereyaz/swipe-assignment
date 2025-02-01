@@ -1,4 +1,4 @@
-package com.reyaz.swipeassignment.ui
+package com.reyaz.swipeassignment.presentation.product
 
 import android.net.Uri
 import android.util.Log
@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
 import com.reyaz.swipeassignment.data.repository.ProductRepository
 import com.reyaz.swipeassignment.domain.Resource
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +32,7 @@ class ProductViewModel(
     fun loadProducts() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) } // Show loading
-//            delay(5_000L)
+            delay(1_000L)
             repository.getAllProducts().collect { result ->
                 val products = result.data ?: emptyList()
                 _uiState.update { state ->
@@ -91,7 +92,6 @@ class ProductViewModel(
         imageUri: Uri?
     ) {
         viewModelScope.launch {
-            Log.d("VIEWMODEL", "image uri: $imageUri")
             _uiState.update { it.copy(isLoading = true, error = null) } // Show loading
             val result = repository.addProduct(
                 productName = productName,
@@ -103,8 +103,8 @@ class ProductViewModel(
             when (result) {
                 is Resource.Success -> {
                     // Reload products after adding a new one
-                    Log.d("VIEWMODEL", "addProduct: ${result}")
-                    Log.d("VIEWMODEL", "addProduct: ${result.message}")
+//                    Log.d("VIEWMODEL", "addProduct: ${result}")
+//                    Log.d("VIEWMODEL", "addProduct: ${result.message}")
                     loadProducts()
                 }
 

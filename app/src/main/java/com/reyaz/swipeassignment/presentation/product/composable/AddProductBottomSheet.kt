@@ -1,10 +1,9 @@
-package com.reyaz.swipeassignment.ui
+package com.reyaz.swipeassignment.presentation.product.composable
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,7 +25,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -68,7 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.reyaz.swipeassignment.R
-import com.reyaz.swipeassignment.data.db.entity.ProductEntity
+import com.reyaz.swipeassignment.presentation.product.ProductViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,7 +95,7 @@ fun AddProductBottomSheet(
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var currentStep by remember { mutableIntStateOf(3) }
+    var currentStep by remember { mutableIntStateOf(0) }
 
     // Animated progress
     val animatedProgress by animateFloatAsState(
@@ -358,7 +356,7 @@ fun AddProductBottomSheet(
                         } else {
                             Icon(
                                 imageVector = ImageVector.vectorResource(R.drawable.image_plus),
-                                contentDescription = "upload image",
+                                contentDescription = "upload image (optional)",
                                 tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                                 modifier = Modifier
                                     .fillMaxSize(0.8f)
@@ -437,7 +435,9 @@ fun AddProductBottomSheet(
 
         // Navigation Buttons
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Back Button (except for first step)
@@ -484,11 +484,6 @@ fun AddProductBottomSheet(
                         }
 
                         2 -> {
-                            // Validate Image
-                            if (imageUri == null) {
-                                errorMessage = "Please select an image"
-                                return@Button
-                            }
                             currentStep++
                         }
 
@@ -499,17 +494,16 @@ fun AddProductBottomSheet(
                                 viewModel.addProduct(
                                     productName,
                                     productType,
-                                    price.toDoubleOrNull()
-                                        ?: throw NumberFormatException("Invalid Price"),
-                                    tax.toDoubleOrNull()
-                                        ?: throw NumberFormatException("Invalid Tax Rate"),
+                                    price.toDouble(),
+                                    tax.toDouble(),
                                     imageUri
                                 )
                                 onDismiss()
                             } catch (e: Exception) {
                                 errorMessage = "Failed to add product: ${e.localizedMessage}"
                                 isUploading = false
-                                currentStep = 2
+//                                currentStep = 2
+                                onDismiss()
                             }
                         }
                     }
@@ -525,8 +519,7 @@ fun AddProductBottomSheet(
                 } else {
                     Text(
                         text = when (currentStep) {
-//                            2 -> if(imageUri == null) "Skip" else "Next"
-                            2 -> imageUri?.let {  "Skip" } ?: "Next"
+                            2 -> imageUri?.let { "Next" } ?: "Skip"
                             3 -> "Add Product"
                             else -> "Next"
                         }

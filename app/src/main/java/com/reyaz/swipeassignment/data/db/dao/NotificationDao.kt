@@ -5,9 +5,10 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Delete
 import com.reyaz.swipeassignment.data.db.entity.PendingUploadEntity
+/*
 
 @Dao
-interface PendingUploadDao {
+interface NotificationDao {
     @Insert
     suspend fun insertPendingUpload(upload: PendingUploadEntity)
 
@@ -20,3 +21,4 @@ interface PendingUploadDao {
     @Delete
     suspend fun deletePendingUpload(upload: PendingUploadEntity)
 }
+*/

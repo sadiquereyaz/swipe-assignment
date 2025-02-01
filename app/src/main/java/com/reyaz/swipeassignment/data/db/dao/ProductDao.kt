@@ -15,8 +15,8 @@ interface ProductDao {
     @Insert
     suspend fun insertProduct(product: ProductEntity)
 
-    @Query("SELECT * FROM products WHERE isPending = 1")
-    suspend fun getPendingProducts(): List<ProductEntity>
+//    @Query("SELECT * FROM products WHERE isViewed = 1")
+//    suspend fun getNewlyAddedProduct(): List<ProductEntity>
 
     @Delete
     suspend fun deleteProduct(product: ProductEntity)

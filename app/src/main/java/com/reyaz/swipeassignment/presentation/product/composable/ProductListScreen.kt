@@ -1,4 +1,4 @@
-package com.reyaz.swipeassignment.ui
+package com.reyaz.swipeassignment.presentation.product.composable
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Badge
@@ -74,6 +75,7 @@ import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import com.reyaz.swipeassignment.R
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
+import com.reyaz.swipeassignment.presentation.product.ProductViewModel
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -128,7 +130,10 @@ fun ProductListScreen(
                             verticalAlignment = Alignment.CenterVertically,
 //                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Box(modifier = Modifier.padding(8.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .clickable { onNavigateToNotification() }) {
                                 BadgedBox(
                                     badge = {
                                         if (itemCount > 0) {
@@ -144,6 +149,7 @@ fun ProductListScreen(
                                     Icon(Icons.Default.Notifications, "Notification")
                                 }
                             }
+                            // search icon
                             IconButton(onClick = { isSearchBarVisible = !isSearchBarVisible }) {
                                 Icon(Icons.Default.Search, "Search")
                             }
@@ -197,7 +203,7 @@ fun ProductListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { isBottomSheetVisible = true },
-                containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
+//                containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                 elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
             ) {
                 Icon(Icons.Default.Add, "add")
@@ -233,87 +239,5 @@ fun ProductListScreen(
         if (isBottomSheetVisible)
             AddProductBottomSheet(onDismiss = { isBottomSheetVisible = false })
 
-    }
-}
-
-@Composable
-fun ProductItem(product: ProductEntity) {
-
-    var showDialog by remember { mutableStateOf(false) }
-    Card(
-        modifier = Modifier
-            .clickable { showDialog = true },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Box {
-            Column(
-                modifier = Modifier
-            ) {
-                AsyncImage(
-                    model = product.image,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                    onLoading = {},
-                    contentScale = ContentScale.Crop
-                )
-
-                Column(modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 8.dp)) {
-                    Text(
-                        text = product.productName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Price: ₹${product.price}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(text = "Tax: ${product.tax}%", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            Text(
-                text = product.productType,
-                maxLines = 1,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .background(Color(0xFFCE7A00).copy(alpha = 0.9f))
-                    .padding(end = 10.dp, start = 8.dp)
-                    .align(alignment = Alignment.BottomEnd)
-            )
-        }
-    }
-    if (showDialog) {
-        Dialog(onDismissRequest = { showDialog = false }) {
-            Surface(shape = RoundedCornerShape(12.dp)) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    product.image?.let {
-                        Image(
-                            painter = rememberImagePainter(
-                                product.image
-                            ),
-                            contentDescription = null,
-                            modifier = Modifier
-                        )
-                    } ?: Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.no_image),
-                        contentDescription = "upload image",
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                        modifier = Modifier
-                            .size(200.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { showDialog = false }) {
-                        Text("Close")
-                    }
-                }
-            }
-        }
     }
 }

@@ -17,7 +17,6 @@ data class Product(
             productName = product_name,
             productType = product_type,
             tax = tax,
-            isPending = true // todo
         )
     }
 }
