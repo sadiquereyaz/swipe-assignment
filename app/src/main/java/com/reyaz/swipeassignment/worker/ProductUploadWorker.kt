@@ -11,7 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.reyaz.swipeassignment.base.BaseApplication
 import com.reyaz.swipeassignment.data.db.dao.PendingUploadDao
-import com.reyaz.swipeassignment.data.repository.ProductRepositoryImpl
+import com.reyaz.swipeassignment.domain.repository.ProductRepository
 import com.reyaz.swipeassignment.domain.model.Resource
 import com.reyaz.swipeassignment.utils.NotificationHelper
 
@@ -21,7 +21,7 @@ class ProductUploadWorker(
 ) : CoroutineWorker(context, params) {
 
     private val notificationHelper = NotificationHelper(context)
-    private val repository: ProductRepositoryImpl by lazy {
+    private val repository: ProductRepository by lazy {
         // Retrieve from a global dependency injector or pass via DI
         (context.applicationContext as BaseApplication).getKoin().get()
     }
