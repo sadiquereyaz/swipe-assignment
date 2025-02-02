@@ -9,7 +9,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.reyaz.swipeassignment.BaseApplication
+import com.reyaz.swipeassignment.base.BaseApplication
 import com.reyaz.swipeassignment.data.db.dao.PendingUploadDao
 import com.reyaz.swipeassignment.data.repository.ProductRepositoryImpl
 import com.reyaz.swipeassignment.domain.model.Resource

@@ -1,4 +1,4 @@
-package com.reyaz.swipeassignment
+package com.reyaz.swipeassignment.base
 
 import android.app.Application
 import androidx.work.Configuration

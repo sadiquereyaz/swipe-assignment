@@ -82,7 +82,13 @@ fun NotificationScreen(
                             HorizontalDivider(modifier = Modifier.fillMaxWidth())
                         }
                     }
+
                 }
+                PullToRefreshContainer(
+                    state = pullToRefreshState,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter),
+                )
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Image(
@@ -91,12 +97,6 @@ fun NotificationScreen(
                     )
                 }
             }
-            PullToRefreshContainer(
-                state = pullToRefreshState,
-                modifier = Modifier
-                    .align(Alignment.TopCenter),
-                containerColor = MaterialTheme.colorScheme.error
-            )
         }
 
     }

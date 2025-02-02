@@ -71,6 +71,6 @@ class NotificationHelper(private val context: Context) {
 
     companion object {
         private const val CHANNEL_ID = "product_upload_channel"
-        private const val PROGRESS_NOTIFICATION_ID = 1001 // Unique ID for progress notifications
+        private const val PROGRESS_NOTIFICATION_ID = 1001
     }
 }
