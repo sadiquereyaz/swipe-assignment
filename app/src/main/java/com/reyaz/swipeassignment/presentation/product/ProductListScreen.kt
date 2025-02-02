@@ -215,7 +215,8 @@ fun ProductListScreen(
                 }
             }
         }
-        if (isBottomSheetVisible) AddProductBottomSheet(viewModel = viewModel, onDismiss = {
+        if (isBottomSheetVisible)
+            AddProductBottomSheet(viewModel = viewModel, onDismiss = {
             isBottomSheetVisible = false
         })
     }

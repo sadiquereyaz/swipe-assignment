@@ -86,10 +86,10 @@ fun AddProductBottomSheet(
         }
     }
     var productName by remember { mutableStateOf("") }
-    var productType by remember { mutableStateOf("Pr Type") }
+    var productType by remember { mutableStateOf("") }
     var isProductTypeDropdownExpanded by remember { mutableStateOf(false) }
-    var price by remember { mutableStateOf("12") }
-    var tax by remember { mutableStateOf("1.1") }
+    var price by remember { mutableStateOf("") }
+    var tax by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }

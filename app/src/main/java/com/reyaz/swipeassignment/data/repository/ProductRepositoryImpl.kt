@@ -94,17 +94,14 @@ class ProductRepositoryImpl(
                         status = Status.Pending
                     )
                 )
-                // Schedule upload work
-                ProductUploadWorker.schedule(context)
                 notificationHelper.showUploadProgressNotification(
                     productName,
                     "Waiting for the internet connection"
                 )
+                ProductUploadWorker.schedule(context)
                 return Resource.Success(Unit)
-            } else {
-                Log.d("REPOSITORY", "online")
             }
-
+            notificationHelper.showUploadProgressNotification(productName)
             if (notificationDao.getNotificationByProductName(productName) == 0) {
                 Log.d("REPOSITORY", "$productName is new product")
                 notificationDao.insertProductNotification(
