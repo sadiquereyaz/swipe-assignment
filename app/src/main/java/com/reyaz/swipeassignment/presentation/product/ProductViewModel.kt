@@ -29,7 +29,7 @@ class ProductViewModel(
     fun loadProducts() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) } // Show loading
-            delay(1_000L)
+          
             repository.getAllProducts().collect { result ->
                 val products = result.data ?: emptyList()
                 _uiState.update { state ->
