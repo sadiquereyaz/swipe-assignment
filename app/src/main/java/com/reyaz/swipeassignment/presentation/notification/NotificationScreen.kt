@@ -1,11 +1,7 @@
 package com.reyaz.swipeassignment.presentation.notification
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,22 +25,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.reyaz.swipeassignment.R
-import com.reyaz.swipeassignment.data.db.entity.NotificationEntity
-import com.reyaz.swipeassignment.data.db.entity.PendingUploadEntity
+import com.reyaz.swipeassignment.presentation.notification.components.NotificationItem
 import org.koin.androidx.compose.koinViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,14 +48,6 @@ fun NotificationScreen(
             pullToRefreshState.endRefresh()
         }
     }
-    val errorShown = remember {
-        mutableStateOf(true)
-    }
-    LaunchedEffect(key1 = uiState.error, block = {
-        if (uiState.error != null) {
-            errorShown.value = true
-        }
-    })
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -75,39 +55,22 @@ fun NotificationScreen(
                     Text("Notification")
                 },
                 scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
-                navigationIcon = { IconButton(onClick = {navigateToHome()}){
-                    Icon(Icons.Default.ArrowBack, "back")
-                } }
-
+                navigationIcon = {
+                    IconButton(onClick = { navigateToHome() }) {
+                        Icon(Icons.Default.ArrowBack, "back")
+                    }
+                }
             )
         },
-
         modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection),
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxWidth().padding(innerPadding)){
-            if(errorShown.value){
-                uiState.error?.let { error ->
-                    LaunchedEffect(key1 = Unit, block = {
-                        kotlinx.coroutines.delay(5000)
-                        errorShown.value = false
-                    })
-                    Text(
-                        error,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.error)
-                            .padding(8.dp)
-                    )
-
-                }
-
-            }
+        Box(modifier = Modifier.fillMaxWidth().padding(innerPadding)) {
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) { CircularProgressIndicator() }
-            } else if(uiState.notificationList.isNotEmpty()) {
+            } else if (uiState.notificationList.isNotEmpty()) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -120,57 +83,21 @@ fun NotificationScreen(
                         }
                     }
                 }
-            }else{
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-                    Image(painter = painterResource(id = R.drawable.no_item), contentDescription = "no data")
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Image(
+                        painter = painterResource(id = R.drawable.no_item),
+                        contentDescription = "no data"
+                    )
                 }
             }
             PullToRefreshContainer(
                 state = pullToRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
+                modifier = Modifier
+                    .align(Alignment.TopCenter),
+                containerColor = MaterialTheme.colorScheme.error
             )
         }
 
     }
 }
-
-@Composable
-fun NotificationItem(modifier: Modifier = Modifier, item: NotificationEntity) {
-    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Text(
-            text = item.productName,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(item.productType, maxLines = 1)
-
-            Text(item.status.name, fontStyle = FontStyle.Italic, color = item.status.color)
-        }
-    }
-
-}
-
-@Preview(showBackground = true)
-@Composable
-fun NotificationPreview() {
-   /* val list =
-        PendingUploadEntity(
-            id = 0L,
-            productName = "Product Name",
-            productType = "Clothing",
-            price = 123.3,
-            tax = 4.1,
-            imageUri = null,
-            timestamp = System.currentTimeMillis(),
-        )
-
-    NotificationItem(item = list)*/
-}
-
-

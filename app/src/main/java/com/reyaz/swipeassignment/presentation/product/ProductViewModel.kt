@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
-import com.reyaz.swipeassignment.data.repository.ProductRepository
-import com.reyaz.swipeassignment.domain.Resource
+import com.reyaz.swipeassignment.domain.repository.ProductRepository
+import com.reyaz.swipeassignment.domain.model.Resource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,16 +18,14 @@ class ProductViewModel(
     private val repository: ProductRepository
 ) : ViewModel() {
 
-    // UI State
     private val _uiState = MutableStateFlow(ProductUiState())
     val uiState: StateFlow<ProductUiState> = _uiState.asStateFlow()
 
-    // Fetch all products on initialization
     init {
         loadProducts()
+        getNotificationCount()
     }
 
-    // Function to load products
     fun loadProducts() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) } // Show loading
@@ -55,17 +53,17 @@ class ProductViewModel(
                     }
                 }
             }
-            repository.getUnviewedCount().collect {
-                _uiState.update { state ->
-                    state.copy(
-                        unViewedCount = it
-                    )
-                }
+        }
+    }
+
+    private fun getNotificationCount(){
+        viewModelScope.launch{
+            repository.getUnViewedCount().collect { count ->
+                _uiState.update { it.copy(unViewedCount = count) }
             }
         }
     }
 
-    // Function to update the search query and filter products
     fun updateSearchQuery(query: String) {
         _uiState.update { currentState ->
             currentState.copy(
@@ -75,7 +73,6 @@ class ProductViewModel(
         }
     }
 
-    // Helper function to filter products based on search query
     private fun filterProducts(products: List<ProductEntity>, query: String): List<ProductEntity> {
         return if (query.isBlank()) {
             products
@@ -89,7 +86,6 @@ class ProductViewModel(
     }
 
 
-    // Function to add a new product
     fun addProduct(
         productName: String,
         productType: String,
@@ -110,25 +106,21 @@ class ProductViewModel(
 
                 when (result) {
                     is Resource.Success -> {
-                        // Reload products after adding a new one
-                        Log.d("VIEWMODEL", "addProduct: ${result}")
                         Log.d("VIEWMODEL", "addProduct: ${result.message}")
                         loadProducts()
                     }
 
                     is Resource.Error -> {
-                        Log.d("VIEWMODEL", "addProduct error: ${result}")
+                        Log.d("VIEWMODEL", "addProduct error: ${result.message}")
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                //error = result.message,
-                                productAdditionError = result.message
+                                error = result.message,
                             )
                         }
                     }
 
                     is Resource.Loading -> {
-                        // Handle loading state if needed
                         _uiState.update { it.copy(isLoading = true, error = null) }
                     }
                 }
@@ -137,8 +129,7 @@ class ProductViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        //error = result.message,
-                        productAdditionError = e.message
+                        error = e.message,
                     )
                 }
             }
@@ -147,8 +138,6 @@ class ProductViewModel(
     }
 
     fun clearError() {
-        _uiState.value.productAdditionError = null
+        _uiState.value.error = null
     }
-
-
 }

@@ -1,8 +1,8 @@
 package com.reyaz.swipeassignment.data.db.entity
 
-import androidx.compose.ui.graphics.Color
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.reyaz.swipeassignment.domain.model.Status
 
 @Entity
 data class NotificationEntity(
@@ -14,9 +14,3 @@ data class NotificationEntity(
     val isViewed: Boolean = false,
     val status: Status = Status.Pending
 )
-
-enum class Status(val color: Color) {
-    Pending(Color(0xFFFFC107)),
-    Uploaded(Color(0xFF4CAF50)),
-    Failed(Color(0xFFEF0000))
-}

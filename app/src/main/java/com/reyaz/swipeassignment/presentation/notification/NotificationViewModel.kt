@@ -2,8 +2,8 @@ package com.reyaz.swipeassignment.presentation.notification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.reyaz.swipeassignment.data.repository.NotificationRepository
-import com.reyaz.swipeassignment.domain.Resource
+import com.reyaz.swipeassignment.domain.repository.NotificationRepository
+import com.reyaz.swipeassignment.domain.model.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +19,7 @@ class NotificationViewModel(
 
     init {
         fetchAll()
+        viewModelScope.launch{ repository.markAsViewed() }
     }
 
     fun fetchAll() {
@@ -28,11 +29,13 @@ class NotificationViewModel(
                 val products = result.data ?: emptyList()
                 _uiState.update { state ->
                     when (result) {
-                        is Resource.Success -> state.copy(
-                            notificationList = products,
-                            isLoading = false,
-                            error = null
-                        )
+                        is Resource.Success -> {
+                            state.copy(
+                                notificationList = products,
+                                isLoading = false,
+                                error = null
+                            )
+                        }
 
                         is Resource.Error -> state.copy(
                             isLoading = false,

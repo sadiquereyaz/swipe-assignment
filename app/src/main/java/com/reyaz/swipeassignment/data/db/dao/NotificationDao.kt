@@ -3,22 +3,28 @@ package com.reyaz.swipeassignment.data.db.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Delete
-import com.reyaz.swipeassignment.data.db.entity.PendingUploadEntity
-/*
+import androidx.room.OnConflictStrategy
+import com.reyaz.swipeassignment.data.db.entity.NotificationEntity
+import com.reyaz.swipeassignment.domain.model.Status
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotificationDao {
-    @Insert
-    suspend fun insertPendingUpload(upload: PendingUploadEntity)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertProductNotification(product: NotificationEntity)
 
-    @Query("SELECT * FROM pending_uploads ORDER BY timestamp ASC")
-    suspend fun getAllPendingUploads(): List<PendingUploadEntity>
+    @Query("SELECT COUNT(*) FROM NotificationEntity WHERE productName = :productName")
+    suspend fun getNotificationByProductName(productName: String): Int
 
-    @Query("SELECT * FROM pending_uploads ORDER BY timestamp ASC")
-    suspend fun getActivePendingUploads(): List<PendingUploadEntity>
+    @Query("UPDATE NotificationEntity SET status = :status, isViewed = :isViewed WHERE productName = :productName")
+    suspend fun updateProductStatus(status: Status, productName:String, isViewed: Boolean = false)
 
-    @Delete
-    suspend fun deletePendingUpload(upload: PendingUploadEntity)
+    @Query("UPDATE NotificationEntity SET isViewed = 1")
+    suspend fun updateAllProductsAsViewed()
+
+    @Query("SELECT COUNT(*) FROM NotificationEntity WHERE isViewed = 0")
+    fun getUnViewedCount(): Flow<Int>
+
+    @Query("SELECT * FROM NotificationEntity ORDER BY timestamp DESC")
+    fun getAllNotification(): Flow<List<NotificationEntity>>
 }
-*/

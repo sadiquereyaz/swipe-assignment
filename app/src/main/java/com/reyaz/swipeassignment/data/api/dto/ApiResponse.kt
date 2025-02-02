@@ -1,4 +1,4 @@
-package com.reyaz.swipeassignment.domain
+package com.reyaz.swipeassignment.data.api.dto
 
 sealed class ApiResponse<out T> {
     data class Success<T>(

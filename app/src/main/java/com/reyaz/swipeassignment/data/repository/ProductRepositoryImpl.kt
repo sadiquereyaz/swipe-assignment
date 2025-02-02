@@ -4,13 +4,16 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.reyaz.swipeassignment.data.api.SwipeApi
+import com.reyaz.swipeassignment.data.db.dao.NotificationDao
 import com.reyaz.swipeassignment.data.db.dao.ProductDao
-import com.reyaz.swipeassignment.data.db.dao.UploadDao
+import com.reyaz.swipeassignment.data.db.dao.PendingUploadDao
 import com.reyaz.swipeassignment.data.db.entity.NotificationEntity
 import com.reyaz.swipeassignment.data.db.entity.PendingUploadEntity
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
-import com.reyaz.swipeassignment.data.db.entity.Status
-import com.reyaz.swipeassignment.domain.Resource
+import com.reyaz.swipeassignment.domain.model.Status
+import com.reyaz.swipeassignment.domain.model.Resource
+import com.reyaz.swipeassignment.domain.repository.ProductRepository
+import com.reyaz.swipeassignment.utils.NotificationHelper
 import com.reyaz.swipeassignment.utils.isOnline
 import com.reyaz.swipeassignment.worker.ProductUploadWorker
 import kotlinx.coroutines.flow.Flow
@@ -22,13 +25,15 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
-class ProductRepository(
+class ProductRepositoryImpl(
     private val api: SwipeApi,
     private val productDao: ProductDao,
-    private val uploadDao: UploadDao,
-    private val context: Context
-) {
-    fun getAllProducts(): Flow<Resource<List<ProductEntity>>> = flow {
+    private val pendingUploadDao: PendingUploadDao,
+    private val notificationDao: NotificationDao,
+    private val context: Context,
+    private val notificationHelper: NotificationHelper
+) : ProductRepository {
+    override fun getAllProducts(): Flow<Resource<List<ProductEntity>>> = flow {
         Log.d("REPOSITORY", "getAllProducts()")
         emit(Resource.Loading())
         try {
@@ -62,7 +67,7 @@ class ProductRepository(
     }
 
 
-    suspend fun addProduct(
+    override suspend fun addProduct(
         productName: String,
         productType: String,
         price: Double,
@@ -73,7 +78,7 @@ class ProductRepository(
             if (!isOnline(context)) {
                 Log.d("REPOSITORY", "addProduct offline")
                 // Save to pending uploads
-                uploadDao.insertPendingUpload(
+                pendingUploadDao.insert(
                     PendingUploadEntity(
                         productName = productName,
                         productType = productType,
@@ -82,7 +87,7 @@ class ProductRepository(
                         imageUri = imageUri?.toString()
                     )
                 )
-                uploadDao.insertProductNotification(
+                notificationDao.insertProductNotification(
                     NotificationEntity(
                         productType = productType,
                         productName = productName,
@@ -91,14 +96,18 @@ class ProductRepository(
                 )
                 // Schedule upload work
                 ProductUploadWorker.schedule(context)
-
+                notificationHelper.showUploadProgressNotification(
+                    productName,
+                    "Waiting for the internet connection"
+                )
                 return Resource.Success(Unit)
+            } else {
+                Log.d("REPOSITORY", "online")
             }
-            Log.d("REPOSITORY", "addProduct notification above")
 
-            if (uploadDao.getNotificationByProductName(productName) == 0) {
+            if (notificationDao.getNotificationByProductName(productName) == 0) {
                 Log.d("REPOSITORY", "$productName is new product")
-                uploadDao.insertProductNotification(
+                notificationDao.insertProductNotification(
                     NotificationEntity(
                         productType = productType,
                         productName = productName,
@@ -123,14 +132,19 @@ class ProductRepository(
             Log.d("REPOSITORY", "addProduct requested")
             if (response.isSuccessful) {
                 Log.d("REPOSITORY", "addProduct success: ${response.body()}")
-                uploadDao.updateProductStatus(
+                notificationDao.updateProductStatus(
                     productName = productName,
-                    status = Status.Uploaded
+                    status = Status.Uploaded,
+                    isViewed = false
                 )
+                notificationHelper.hideProgressNotification()
+                notificationHelper.showUploadSuccessNotification(productName)
                 Resource.Success(Unit)
 
             } else {
                 Log.d("REPOSITORY", "addProduct error: ${response.message()}")
+                notificationHelper.hideProgressNotification()
+                notificationHelper.showUploadFailureNotification(productName, response.message())
                 Resource.Error(
                     response.message() ?: "Error while adding the product"
                 )
@@ -138,9 +152,16 @@ class ProductRepository(
             Resource.Success(Unit)
         } catch (e: Exception) {
             Log.d("REPOSITORY", "addProduct error: ${e.message}")
-            uploadDao.updateProductStatus(
+            notificationHelper.hideProgressNotification()
+            notificationHelper.showUploadFailureNotification(
+                productName,
+                e.localizedMessage ?: "Unknown error"
+            )
+
+            notificationDao.updateProductStatus(
                 productName = productName,
-                status = Status.Failed
+                status = Status.Failed,
+                isViewed = false
             )
             Resource.Error(e.message ?: "Unknown error")
         }
@@ -153,7 +174,7 @@ class ProductRepository(
 
     private fun createImagePart(uri: Uri): MultipartBody.Part? {
         Log.d("REPOSITORY", "createImagePart")
-        try{
+        try {
             val contentResolver = context.contentResolver
             val inputStream = contentResolver.openInputStream(uri) ?: return null
 
@@ -165,13 +186,15 @@ class ProductRepository(
             val requestFile = tempFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
             Log.d("REPOSITORY", "returning createImagePart")
             return MultipartBody.Part.createFormData("files[]", tempFile.name, requestFile)
-        } catch(e:Exception){
+        } catch (e: Exception) {
             Log.d("REPOSITORY", "createImagePart error: ${e.message}")
             return null
         }
     }
 
-    fun getUnviewedCount(): Flow<Int> {
-        return uploadDao.getUnviewedCount()
+    override fun getUnViewedCount(): Flow<Int> = flow {
+        notificationDao.getUnViewedCount().collect {
+            emit(it)
+        }
     }
 }

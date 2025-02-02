@@ -1,4 +1,4 @@
-package com.reyaz.swipeassignment.presentation.product.composable
+package com.reyaz.swipeassignment.presentation.product.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth

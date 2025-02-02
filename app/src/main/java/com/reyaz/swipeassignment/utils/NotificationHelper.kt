@@ -28,11 +28,11 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    fun showUploadProgressNotification(productName: String) {
+    fun showUploadProgressNotification(productName: String, message: String? = null) {
         val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.upload_progress)
             .setContentTitle("Uploading $productName")
-            .setContentText("Upload in progress...")
+            .setContentText(message ?: "Upload in progress...")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setOngoing(true)
             .setProgress(0, 0, true) // indeterminate progress

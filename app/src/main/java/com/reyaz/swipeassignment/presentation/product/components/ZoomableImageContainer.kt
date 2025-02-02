@@ -1,7 +1,6 @@
-package com.reyaz.swipeassignment.presentation.product.composable
+package com.reyaz.swipeassignment.presentation.product.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
@@ -13,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
@@ -39,7 +37,6 @@ import coil.compose.rememberAsyncImagePainter
                 translationY = offset.y
             )
             .transformable(state = state)
-            .background(Color.Blue)
     ){
         Image(
             painter = rememberAsyncImagePainter(image),

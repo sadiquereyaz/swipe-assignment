@@ -1,4 +1,4 @@
-package com.reyaz.swipeassignment.presentation.product.composable
+package com.reyaz.swipeassignment.presentation.product.components
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -67,17 +68,15 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.reyaz.swipeassignment.R
 import com.reyaz.swipeassignment.presentation.product.ProductViewModel
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductBottomSheet(
-    viewModel: ProductViewModel = koinViewModel(),
+    viewModel: ProductViewModel,
     onDismiss: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Derive unique product types from existing products
     val uniqueProductTypes by remember(uiState.products) {
         derivedStateOf {
             uiState.products
@@ -86,8 +85,7 @@ fun AddProductBottomSheet(
                 .sorted()
         }
     }
-
-    var productName by remember { mutableStateOf("Pr Name") }
+    var productName by remember { mutableStateOf("") }
     var productType by remember { mutableStateOf("Pr Type") }
     var isProductTypeDropdownExpanded by remember { mutableStateOf(false) }
     var price by remember { mutableStateOf("12") }
@@ -344,24 +342,34 @@ fun AddProductBottomSheet(
 
                     ) {
                         if (imageUri != null) {
-                            AsyncImage(
-                                model = imageUri,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxSize(0.8f)
-//                                    .size(200.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .align(Alignment.CenterHorizontally)
-                            )
+                            Column {
+                                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            "close",
+                                            modifier = Modifier.clickable { imageUri = null }.padding(0.dp, 4.dp, 4.dp, 0.dp)
+                                        )
+                                }
+                                AsyncImage(
+                                    model = imageUri,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding( 24.dp,0.dp, 24.dp, 24.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .align(Alignment.CenterHorizontally),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
                         } else {
                             Icon(
                                 imageVector = ImageVector.vectorResource(R.drawable.image_plus),
-                                contentDescription = "upload image (optional)",
+                                contentDescription = "upload image",
                                 tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                                 modifier = Modifier
                                     .fillMaxSize(0.8f)
                             )
-                            Text("Upload Image")
+                            Text("Upload Image (optional)")
                         }
                     }
                 }
@@ -369,15 +377,14 @@ fun AddProductBottomSheet(
         }
 
 
-        // Step 4: Confirmation
+        // Confirmation step
         if (currentStep == 3) {
             Card(
-                modifier = Modifier,
+                modifier = Modifier.padding(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Box {
                     Column(
-                        modifier = Modifier
                     ) {
                         AsyncImage(
                             model = imageUri,
@@ -488,8 +495,6 @@ fun AddProductBottomSheet(
                         }
 
                         3 -> {
-                            // Final Submit
-                            isUploading = true
                             try {
                                 viewModel.addProduct(
                                     productName,
@@ -500,9 +505,6 @@ fun AddProductBottomSheet(
                                 )
                                 onDismiss()
                             } catch (e: Exception) {
-                                errorMessage = "Failed to add product: ${e.localizedMessage}"
-                                isUploading = false
-//                                currentStep = 2
                                 onDismiss()
                             }
                         }

@@ -10,33 +10,34 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.reyaz.swipeassignment.BaseApplication
-import com.reyaz.swipeassignment.data.db.dao.UploadDao
-import com.reyaz.swipeassignment.data.db.entity.NotificationEntity
-import com.reyaz.swipeassignment.data.db.entity.Status
-import com.reyaz.swipeassignment.data.repository.ProductRepository
-import com.reyaz.swipeassignment.domain.Resource
+import com.reyaz.swipeassignment.data.db.dao.PendingUploadDao
+import com.reyaz.swipeassignment.data.repository.ProductRepositoryImpl
+import com.reyaz.swipeassignment.domain.model.Resource
+import com.reyaz.swipeassignment.utils.NotificationHelper
 
 class ProductUploadWorker(
     context: Context,
     params: WorkerParameters,
-//    private val repository: ProductRepository,
-//    private val uploadDao: UploadDao
 ) : CoroutineWorker(context, params) {
 
-//    private val notificationHelper = NotificationHelper(context)
-    private val repository: ProductRepository by lazy {
+    private val notificationHelper = NotificationHelper(context)
+    private val repository: ProductRepositoryImpl by lazy {
         // Retrieve from a global dependency injector or pass via DI
         (context.applicationContext as BaseApplication).getKoin().get()
     }
 
-    private val uploadDao: UploadDao by lazy {
+    private val pendingUploadDao: PendingUploadDao by lazy {
         (context.applicationContext as BaseApplication).getKoin().get()
     }
 
     override suspend fun doWork(): Result {
         try {
             Log.d("WORKER", "doWork() as internet connected")
-            uploadDao.getActivePendingUploads().forEach { pendingUpload ->
+            pendingUploadDao.getAll().forEach { pendingUpload ->
+
+                notificationHelper.hideProgressNotification()
+                notificationHelper.showUploadProgressNotification(pendingUpload.productName)
+
                 val result = repository.addProduct(
                     productName = pendingUpload.productName,
                     productType = pendingUpload.productType,
@@ -48,30 +49,23 @@ class ProductUploadWorker(
                 when (result) {
                     is Resource.Success -> {
                         Log.d("WORKER", "doWork() success")
-                        uploadDao.updateProductStatus(Status.Uploaded, productName = pendingUpload.productName)
-                        uploadDao.deletePendingUpload(pendingUpload)
-                        uploadDao.insertProductNotification(
-                            NotificationEntity(
-                                productName = pendingUpload.productName,
-                                productType = pendingUpload.productType,
-                                status = Status.Uploaded,
-                                isViewed = false
-                            )
-                        )
+//                        uploadDao.updateProductStatus(status = Status.Uploaded, productName = pendingUpload.productName, isViewed = false)
+                        pendingUploadDao.delete(pendingUpload)
 //                        notificationHelper.hideProgressNotification()
 //                        notificationHelper.showUploadSuccessNotification(pendingUpload.productName)
                     }
                     is Resource.Error -> {
                         Log.d("WORKER", "inside doWork() add response error")
-                        uploadDao.updateProductStatus(Status.Failed, productName = pendingUpload.productName)
-//                        notificationHelper.showUploadFailureNotification(
-//                            pendingUpload.productName,
-//                            result.message ?: "Unknown error"
-//                        )
+                      /*  uploadDao.updateProductStatus(Status.Failed, productName = pendingUpload.productName)
+                        notificationHelper.showUploadFailureNotification(
+                            pendingUpload.productName,
+                            result.message ?: "Unknown error"
+                        )*/
                     }
                     is Resource.Loading -> {
                         Log.d("WORKER", "doWork() loading")
-//                        notificationHelper.showUploadProgressNotification(pendingUpload.productName)
+                        /*notificationHelper.hideProgressNotification()
+                        notificationHelper.showUploadProgressNotification(pendingUpload.productName)*/
                     }
                 }
             }
@@ -102,12 +96,4 @@ class ProductUploadWorker(
                 )
         }
     }
-    /*class Factory(
-        private val repository: ProductRepository,
-        private val uploadDao: UploadDao
-    ) {
-        fun create(context: Context, params: WorkerParameters): ProductUploadWorker {
-            return ProductUploadWorker(context, params, repository, uploadDao)
-        }
-    }*/
 }

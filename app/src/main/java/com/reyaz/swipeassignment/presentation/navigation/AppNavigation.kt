@@ -6,25 +6,25 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.reyaz.swipeassignment.presentation.notification.NotificationScreen
-import com.reyaz.swipeassignment.presentation.product.composable.ProductListScreen
+import com.reyaz.swipeassignment.presentation.product.ProductListScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
 
-        NavHost(
-            navController = navController,
-            startDestination = "products") {
-            composable("products") {
-                ProductListScreen(
-                    onNavigateToNotification = { navController.navigate("notification_route") }
-                )
-
-            }
-            composable("notification_route") {
-                 NotificationScreen(
-                     navigateToHome = { navController.popBackStack() }
-                 )
-            }
+    NavHost(
+        navController = navController,
+        startDestination = Route.Products
+    ) {
+        composable<Route.Products> {
+            ProductListScreen(
+                onNavigateToNotification = { navController.navigate(Route.Notification) }
+            )
+        }
+        composable<Route.Notification> {
+            NotificationScreen(
+                navigateToHome = { navController.popBackStack() }
+            )
         }
     }
+}
