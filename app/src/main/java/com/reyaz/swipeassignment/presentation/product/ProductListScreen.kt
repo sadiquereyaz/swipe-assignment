@@ -80,7 +80,7 @@ fun ProductListScreen(
         }
     }
     var isSearchBarVisible by remember { mutableStateOf(false) }
-    var isBottomSheetVisible by remember { mutableStateOf(false) }
+    var isBottomSheetVisible by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     // snackbar

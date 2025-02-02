@@ -12,7 +12,8 @@ interface ProductRepository {
         productType: String,
         price: Double,
         tax: Double,
-        imageUri: Uri?
+        imageUri: Uri?,
+        isForeground: Boolean
     ): Resource<Unit>
     fun getUnViewedCount(): Flow<Int>
 }

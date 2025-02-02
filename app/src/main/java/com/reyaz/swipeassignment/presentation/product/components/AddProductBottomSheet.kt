@@ -85,15 +85,15 @@ fun AddProductBottomSheet(
                 .sorted()
         }
     }
-    var productName by remember { mutableStateOf("") }
-    var productType by remember { mutableStateOf("") }
+    var productName by remember { mutableStateOf("${System.currentTimeMillis()}") }
+    var productType by remember { mutableStateOf("type") }
     var isProductTypeDropdownExpanded by remember { mutableStateOf(false) }
-    var price by remember { mutableStateOf("") }
-    var tax by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("100") }
+    var tax by remember { mutableStateOf("1.1") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var currentStep by remember { mutableIntStateOf(0) }
+    var currentStep by remember { mutableIntStateOf(2) }
 
     // Animated progress
     val animatedProgress by animateFloatAsState(

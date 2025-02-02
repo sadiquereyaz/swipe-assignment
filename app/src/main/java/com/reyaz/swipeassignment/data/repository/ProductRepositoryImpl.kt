@@ -5,13 +5,13 @@ import android.net.Uri
 import android.util.Log
 import com.reyaz.swipeassignment.data.api.SwipeApi
 import com.reyaz.swipeassignment.data.db.dao.NotificationDao
-import com.reyaz.swipeassignment.data.db.dao.ProductDao
 import com.reyaz.swipeassignment.data.db.dao.PendingUploadDao
+import com.reyaz.swipeassignment.data.db.dao.ProductDao
 import com.reyaz.swipeassignment.data.db.entity.NotificationEntity
 import com.reyaz.swipeassignment.data.db.entity.PendingUploadEntity
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
-import com.reyaz.swipeassignment.domain.model.Status
 import com.reyaz.swipeassignment.domain.model.Resource
+import com.reyaz.swipeassignment.domain.model.Status
 import com.reyaz.swipeassignment.domain.repository.ProductRepository
 import com.reyaz.swipeassignment.utils.NotificationHelper
 import com.reyaz.swipeassignment.utils.isOnline
@@ -24,6 +24,9 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.util.UUID
 
 class ProductRepositoryImpl(
     private val api: SwipeApi,
@@ -33,8 +36,8 @@ class ProductRepositoryImpl(
     private val context: Context,
     private val notificationHelper: NotificationHelper
 ) : ProductRepository {
+
     override fun getAllProducts(): Flow<Resource<List<ProductEntity>>> = flow {
-        Log.d("REPOSITORY", "getAllProducts()")
         emit(Resource.Loading())
         try {
             if (isOnline(context)) refreshProducts()
@@ -42,68 +45,40 @@ class ProductRepositoryImpl(
                 emit(Resource.Success(products))
             }
         } catch (e: Exception) {
-            Log.d("REPOSITORY", "getAllProducts() ERRor ${e.message}")
             emit(Resource.Error(e.message ?: "Unknown error"))
         }
     }
 
     private suspend fun refreshProducts() {
-        Log.d("REPOSITORY", "refresh()")
         try {
             val response = api.getProducts()
-            //Log.d("REPOSITORY", "product response ${response.body()}")
             if (response.isSuccessful) {
                 productDao.deleteAllProducts()
                 response.body()?.forEach { product ->
-                    // if (product.image != "")
                     productDao.insertProduct(product.toEntity())
                 }
-            } else {
-                Log.e("REPOSITORY", "Error fetching products: ${response.message()}")
             }
         } catch (e: Exception) {
             Log.e("REPOSITORY", "refreshProducts error: ${e.message}")
         }
     }
 
-
     override suspend fun addProduct(
         productName: String,
         productType: String,
         price: Double,
         tax: Double,
-        imageUri: Uri?
+        imageUri: Uri?,
+        isForeground: Boolean,
     ): Resource<Unit> {
         return try {
             if (!isOnline(context)) {
-                Log.d("REPOSITORY", "addProduct offline")
-                // Save to pending uploads
-                pendingUploadDao.insert(
-                    PendingUploadEntity(
-                        productName = productName,
-                        productType = productType,
-                        price = price,
-                        tax = tax,
-                        imageUri = imageUri?.toString()
-                    )
-                )
-                notificationDao.insertProductNotification(
-                    NotificationEntity(
-                        productType = productType,
-                        productName = productName,
-                        status = Status.Pending
-                    )
-                )
-                notificationHelper.showUploadProgressNotification(
-                    productName,
-                    "Waiting for the internet connection"
-                )
-                ProductUploadWorker.schedule(context)
+                savePendingUpload(productName, productType, price, tax, imageUri)
                 return Resource.Success(Unit)
             }
+
             notificationHelper.showUploadProgressNotification(productName)
             if (notificationDao.getNotificationByProductName(productName) == 0) {
-                Log.d("REPOSITORY", "$productName is new product")
                 notificationDao.insertProductNotification(
                     NotificationEntity(
                         productType = productType,
@@ -111,8 +86,7 @@ class ProductRepositoryImpl(
                         status = Status.Pending
                     )
                 )
-            } else
-                Log.d("REPOSITORY", "$productName already exists")
+            }
 
             val requestBodyMap = mutableMapOf<String, RequestBody>()
             requestBodyMap["product_name"] =
@@ -123,12 +97,14 @@ class ProductRepositoryImpl(
                 price.toString().toRequestBody("text/plain".toMediaTypeOrNull())
             requestBodyMap["tax"] = tax.toString().toRequestBody("text/plain".toMediaTypeOrNull())
 
-            val imagePart = imageUri?.let { createImagePart(it) }
+            val imagePart =
+                if (!isForeground)
+                    imageUri?.let { createImagePart(Uri.parse(it.toString()).path.toString()) }
+                else
+                    imageUri?.let { createImagePart(it) }
 
             val response = api.addProduct(requestBodyMap, imagePart)
-            Log.d("REPOSITORY", "addProduct requested")
             if (response.isSuccessful) {
-                Log.d("REPOSITORY", "addProduct success: ${response.body()}")
                 notificationDao.updateProductStatus(
                     productName = productName,
                     status = Status.Uploaded,
@@ -137,24 +113,17 @@ class ProductRepositoryImpl(
                 notificationHelper.hideProgressNotification()
                 notificationHelper.showUploadSuccessNotification(productName)
                 Resource.Success(Unit)
-
             } else {
-                Log.d("REPOSITORY", "addProduct error: ${response.message()}")
                 notificationHelper.hideProgressNotification()
                 notificationHelper.showUploadFailureNotification(productName, response.message())
-                Resource.Error(
-                    response.message() ?: "Error while adding the product"
-                )
+                Resource.Error(response.message() ?: "Error while adding the product")
             }
-            Resource.Success(Unit)
         } catch (e: Exception) {
-            Log.d("REPOSITORY", "addProduct error: ${e.message}")
             notificationHelper.hideProgressNotification()
             notificationHelper.showUploadFailureNotification(
                 productName,
                 e.localizedMessage ?: "Unknown error"
             )
-
             notificationDao.updateProductStatus(
                 productName = productName,
                 status = Status.Failed,
@@ -162,11 +131,6 @@ class ProductRepositoryImpl(
             )
             Resource.Error(e.message ?: "Unknown error")
         }
-    }
-
-    // Create text fields as RequestBody
-    fun createPartFromString(value: String): RequestBody {
-        return RequestBody.create("text/plain".toMediaTypeOrNull(), value)
     }
 
     private fun createImagePart(uri: Uri): MultipartBody.Part? {
@@ -189,9 +153,64 @@ class ProductRepositoryImpl(
         }
     }
 
-    override fun getUnViewedCount(): Flow<Int> = flow {
-        notificationDao.getUnViewedCount().collect {
-            emit(it)
+    private suspend fun savePendingUpload(
+        productName: String,
+        productType: String,
+        price: Double,
+        tax: Double,
+        imageUri: Uri?
+    ) {
+        val imagePath = imageUri?.let { persistImage(it) }
+        pendingUploadDao.insert(
+            PendingUploadEntity(
+                productName = productName,
+                productType = productType,
+                price = price,
+                tax = tax,
+                imageUri = imagePath
+            )
+        )
+        notificationDao.insertProductNotification(
+            NotificationEntity(
+                productType = productType,
+                productName = productName,
+                status = Status.Pending
+            )
+        )
+        notificationHelper.showUploadProgressNotification(
+            productName,
+            "Waiting for the internet connection"
+        )
+        ProductUploadWorker.schedule(context)
+    }
+
+    private fun persistImage(uri: Uri): String? {
+        return try {
+            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+            val file = File(context.filesDir, "image_${UUID.randomUUID()}.jpg")
+            val outputStream = FileOutputStream(file)
+            inputStream?.copyTo(outputStream)
+            outputStream.close()
+            inputStream?.close()
+            file.absolutePath
+        } catch (e: Exception) {
+            Log.e("REPOSITORY", "Error persisting image: ${e.message}")
+            null
         }
+    }
+
+    private fun createImagePart(filePath: String): MultipartBody.Part? {
+        return try {
+            val file = File(filePath)
+            val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            MultipartBody.Part.createFormData("files[]", file.name, requestFile)
+        } catch (e: Exception) {
+            Log.e("REPOSITORY", "createImagePart error: ${e.message}")
+            null
+        }
+    }
+
+    override fun getUnViewedCount(): Flow<Int> = flow {
+        notificationDao.getUnViewedCount().collect { emit(it) }
     }
 }

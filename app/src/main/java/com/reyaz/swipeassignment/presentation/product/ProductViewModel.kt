@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
 import com.reyaz.swipeassignment.domain.repository.ProductRepository
 import com.reyaz.swipeassignment.domain.model.Resource
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -101,7 +100,8 @@ class ProductViewModel(
                     productType = productType,
                     price = price,
                     tax = tax,
-                    imageUri = imageUri
+                    imageUri = imageUri,
+                    isForeground = true
                 )
 
                 when (result) {
