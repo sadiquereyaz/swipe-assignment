@@ -9,6 +9,7 @@ data class ProductUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val searchQuery: String = "",
-    var productAdditionError: String? = null
+    var productAdditionError: String? = null,
+    var unViewedCount: Int = 0
 
 )

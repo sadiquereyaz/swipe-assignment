@@ -1,18 +1,18 @@
 package com.reyaz.swipeassignment.data.repository
 
-import ProductUploadWorker
 import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.reyaz.swipeassignment.data.api.SwipeApi
-import com.reyaz.swipeassignment.data.db.dao.UploadDao
 import com.reyaz.swipeassignment.data.db.dao.ProductDao
+import com.reyaz.swipeassignment.data.db.dao.UploadDao
 import com.reyaz.swipeassignment.data.db.entity.NotificationEntity
 import com.reyaz.swipeassignment.data.db.entity.PendingUploadEntity
 import com.reyaz.swipeassignment.data.db.entity.ProductEntity
 import com.reyaz.swipeassignment.data.db.entity.Status
 import com.reyaz.swipeassignment.domain.Resource
 import com.reyaz.swipeassignment.utils.isOnline
+import com.reyaz.swipeassignment.worker.ProductUploadWorker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -46,7 +46,7 @@ class ProductRepository(
         Log.d("REPOSITORY", "refresh()")
         try {
             val response = api.getProducts()
-            Log.d("REPOSITORY", "product response ${response.body()}")
+            //Log.d("REPOSITORY", "product response ${response.body()}")
             if (response.isSuccessful) {
                 productDao.deleteAllProducts()
                 response.body()?.forEach { product ->
@@ -72,15 +72,6 @@ class ProductRepository(
         return try {
             if (!isOnline(context)) {
                 Log.d("REPOSITORY", "addProduct offline")
-                /*productDao.insertProduct(
-                    ProductEntity(
-                        productName = productName,
-                        productType = productType,
-                        price = price,
-                        tax = tax,
-                        image = imageUri?.toString() ?: ""
-                    )
-                )*/
                 // Save to pending uploads
                 uploadDao.insertPendingUpload(
                     PendingUploadEntity(
@@ -88,20 +79,34 @@ class ProductRepository(
                         productType = productType,
                         price = price,
                         tax = tax,
-                        imageUri = imageUri?.toString() ?: ""
+                        imageUri = imageUri?.toString()
                     )
                 )
-
-                uploadDao.insertProductNotification(NotificationEntity(
-                    productType = productType,
-                    productName = productName
-                ))
-
+                uploadDao.insertProductNotification(
+                    NotificationEntity(
+                        productType = productType,
+                        productName = productName,
+                        status = Status.Pending
+                    )
+                )
                 // Schedule upload work
                 ProductUploadWorker.schedule(context)
 
                 return Resource.Success(Unit)
             }
+            Log.d("REPOSITORY", "addProduct notification above")
+
+            if (uploadDao.getNotificationByProductName(productName) == 0) {
+                Log.d("REPOSITORY", "$productName is new product")
+                uploadDao.insertProductNotification(
+                    NotificationEntity(
+                        productType = productType,
+                        productName = productName,
+                        status = Status.Pending
+                    )
+                )
+            } else
+                Log.d("REPOSITORY", "$productName already exists")
 
             val requestBodyMap = mutableMapOf<String, RequestBody>()
             requestBodyMap["product_name"] =
@@ -115,14 +120,13 @@ class ProductRepository(
             val imagePart = imageUri?.let { createImagePart(it) }
 
             val response = api.addProduct(requestBodyMap, imagePart)
-
+            Log.d("REPOSITORY", "addProduct requested")
             if (response.isSuccessful) {
                 Log.d("REPOSITORY", "addProduct success: ${response.body()}")
-                uploadDao.insertProductNotification(NotificationEntity(
-                    productType = productType,
+                uploadDao.updateProductStatus(
                     productName = productName,
                     status = Status.Uploaded
-                ))
+                )
                 Resource.Success(Unit)
 
             } else {
@@ -134,11 +138,10 @@ class ProductRepository(
             Resource.Success(Unit)
         } catch (e: Exception) {
             Log.d("REPOSITORY", "addProduct error: ${e.message}")
-            uploadDao.insertProductNotification(NotificationEntity(
-                productType = productType,
+            uploadDao.updateProductStatus(
                 productName = productName,
                 status = Status.Failed
-            ))
+            )
             Resource.Error(e.message ?: "Unknown error")
         }
     }
@@ -149,15 +152,26 @@ class ProductRepository(
     }
 
     private fun createImagePart(uri: Uri): MultipartBody.Part? {
-        val contentResolver = context.contentResolver
-        val inputStream = contentResolver.openInputStream(uri) ?: return null
+        Log.d("REPOSITORY", "createImagePart")
+        try{
+            val contentResolver = context.contentResolver
+            val inputStream = contentResolver.openInputStream(uri) ?: return null
 
-        val tempFile = File(context.cacheDir, "temp_image_${System.currentTimeMillis()}.jpg")
-        tempFile.outputStream().use { outputStream ->
-            inputStream.copyTo(outputStream)
+            val tempFile = File(context.cacheDir, "temp_image_${System.currentTimeMillis()}.jpg")
+            tempFile.outputStream().use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+
+            val requestFile = tempFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            Log.d("REPOSITORY", "returning createImagePart")
+            return MultipartBody.Part.createFormData("files[]", tempFile.name, requestFile)
+        } catch(e:Exception){
+            Log.d("REPOSITORY", "createImagePart error: ${e.message}")
+            return null
         }
+    }
 
-        val requestFile = tempFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
-        return MultipartBody.Part.createFormData("files[]", tempFile.name, requestFile)
+    fun getUnviewedCount(): Flow<Int> {
+        return uploadDao.getUnviewedCount()
     }
 }

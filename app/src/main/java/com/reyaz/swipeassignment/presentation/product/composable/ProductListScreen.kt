@@ -136,12 +136,12 @@ fun ProductListScreen(
                                     .clickable { onNavigateToNotification() }) {
                                 BadgedBox(
                                     badge = {
-                                        if (itemCount > 0) {
+                                        if (uiState.unViewedCount > 0) {
                                             Badge(
                                                 containerColor = Color.Red,
                                                 contentColor = Color.White
                                             ) {
-                                                Text("$itemCount")
+                                                Text("${uiState.unViewedCount}")
                                             }
                                         }
                                     }

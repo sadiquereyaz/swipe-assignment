@@ -1,6 +1,7 @@
 package com.reyaz.swipeassignment.data.db.dao
 
 import androidx.room.Dao
+import androidx.room.OnConflictStrategy
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -22,8 +23,11 @@ interface UploadDao {
     suspend fun deletePendingUpload(upload: PendingUploadEntity)
 
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertProductNotification(product: NotificationEntity)
+
+    @Query("SELECT COUNT(*) FROM NotificationEntity WHERE productName = :productName")
+     suspend fun getNotificationByProductName(productName: String): Int
 
     @Query("UPDATE NotificationEntity SET status = :status WHERE productName = :productName")
     suspend fun updateProductStatus(status: Status, productName:String)
@@ -31,6 +35,9 @@ interface UploadDao {
     @Query("UPDATE NotificationEntity SET isViewed = 1")
     suspend fun updateAllProductsAsViewed()
 
-    @Query("SELECT * FROM NotificationEntity ORDER BY timestamp ASC")
+    @Query("SELECT COUNT(*) FROM NotificationEntity WHERE isViewed = 0")
+    fun getUnviewedCount(): Flow<Int>
+
+    @Query("SELECT * FROM NotificationEntity ORDER BY timestamp DESC")
     fun getAllNotification(): Flow<List<NotificationEntity>>
 }

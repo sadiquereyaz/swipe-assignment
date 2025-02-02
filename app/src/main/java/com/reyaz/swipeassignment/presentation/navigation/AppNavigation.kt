@@ -22,7 +22,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
             }
             composable("notification_route") {
-                 NotificationScreen()
+                 NotificationScreen(
+                     navigateToHome = { navController.popBackStack() }
+                 )
             }
         }
     }

@@ -24,7 +24,6 @@ class ProductViewModel(
 
     // Fetch all products on initialization
     init {
-        Log.d("VIEWMODEL", "init")
         loadProducts()
     }
 
@@ -54,6 +53,13 @@ class ProductViewModel(
                             error = null
                         )
                     }
+                }
+            }
+            repository.getUnviewedCount().collect {
+                _uiState.update { state ->
+                    state.copy(
+                        unViewedCount = it
+                    )
                 }
             }
         }
@@ -93,34 +99,50 @@ class ProductViewModel(
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) } // Show loading
-            val result = repository.addProduct(
-                productName = productName,
-                productType = productType,
-                price = price,
-                tax = tax,
-                imageUri = imageUri
-            )
-            when (result) {
-                is Resource.Success -> {
-                    // Reload products after adding a new one
-//                    Log.d("VIEWMODEL", "addProduct: ${result}")
-//                    Log.d("VIEWMODEL", "addProduct: ${result.message}")
-                    loadProducts()
-                }
+            try {
+                val result = repository.addProduct(
+                    productName = productName,
+                    productType = productType,
+                    price = price,
+                    tax = tax,
+                    imageUri = imageUri
+                )
 
-                is Resource.Error -> {
-                    _uiState.update { it.copy(
+                when (result) {
+                    is Resource.Success -> {
+                        // Reload products after adding a new one
+                        Log.d("VIEWMODEL", "addProduct: ${result}")
+                        Log.d("VIEWMODEL", "addProduct: ${result.message}")
+                        loadProducts()
+                    }
+
+                    is Resource.Error -> {
+                        Log.d("VIEWMODEL", "addProduct error: ${result}")
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                //error = result.message,
+                                productAdditionError = result.message
+                            )
+                        }
+                    }
+
+                    is Resource.Loading -> {
+                        // Handle loading state if needed
+                        _uiState.update { it.copy(isLoading = true, error = null) }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.d("VIEWMODEL", "addProduct catch block: ${e.message}")
+                _uiState.update {
+                    it.copy(
                         isLoading = false,
                         //error = result.message,
-                        productAdditionError = result.message
-                    ) }
-                }
-
-                is Resource.Loading -> {
-                    // Handle loading state if needed
-                    _uiState.update { it.copy(isLoading = true, error = null) }
+                        productAdditionError = e.message
+                    )
                 }
             }
+
         }
     }
 

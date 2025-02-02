@@ -10,7 +10,7 @@ import com.reyaz.swipeassignment.data.db.entity.ProductEntity
 
 @Database(
     entities = [ProductEntity::class, PendingUploadEntity::class, NotificationEntity::class],
-    version = 9
+    version = 11
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao

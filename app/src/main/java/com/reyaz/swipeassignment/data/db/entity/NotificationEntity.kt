@@ -16,5 +16,7 @@ data class NotificationEntity(
 )
 
 enum class Status(val color: Color) {
-    Pending(Color(0xFF028A00)), Uploaded(Color(0xFFFFC107)), Failed(Color(0xFF2196F3))
+    Pending(Color(0xFFFFC107)),
+    Uploaded(Color(0xFF4CAF50)),
+    Failed(Color(0xFFEF0000))
 }
